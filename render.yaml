@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: anime-sama-stremio
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /manifest.json
+
