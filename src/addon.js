@@ -4,13 +4,27 @@ const scraper = require('./scraper');
 // Configuration du manifest de l'addon
 const manifest = {
     id: 'org.animesama.stremio',
-    version: '1.0.0',
+    version: '1.1.0',
     name: 'Anime-Sama',
     description: 'Regardez vos animes préférés depuis Anime-Sama directement dans Stremio. Streaming VOSTFR et VF en haute qualité.',
     logo: 'https://anime-sama.org/favicon.ico',
     resources: ['catalog', 'meta', 'stream'],
-    types: ['series', 'anime'],
+    types: ['anime', 'series'],
     catalogs: [
+        {
+            type: 'anime',
+            id: 'animesama-anime-catalog',
+            name: 'Anime-Sama',
+            extra: [
+                { name: 'search', isRequired: false },
+                { name: 'skip', isRequired: false }
+            ]
+        },
+        {
+            type: 'anime',
+            id: 'animesama-anime-latest',
+            name: 'Derniers épisodes'
+        },
         {
             type: 'series',
             id: 'animesama-catalog',
@@ -19,11 +33,6 @@ const manifest = {
                 { name: 'search', isRequired: false },
                 { name: 'skip', isRequired: false }
             ]
-        },
-        {
-            type: 'series',
-            id: 'animesama-latest',
-            name: 'Anime-Sama - Derniers épisodes'
         }
     ],
     idPrefixes: ['animesama:'],
@@ -42,8 +51,9 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
     
     try {
         let metas = [];
+        const contentType = type; // 'anime' ou 'series'
         
-        if (id === 'animesama-catalog') {
+        if (id === 'animesama-catalog' || id === 'animesama-anime-catalog') {
             const skip = extra.skip ? parseInt(extra.skip) : 0;
             
             if (extra.search) {
@@ -51,7 +61,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
                 const results = await scraper.searchAnime(extra.search);
                 metas = results.map(anime => ({
                     id: anime.id,
-                    type: 'series',
+                    type: contentType,
                     name: anime.name,
                     poster: anime.poster,
                     posterShape: 'poster',
@@ -62,14 +72,14 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
                 const animes = await scraper.getCatalog(skip, 50);
                 metas = animes.map(anime => ({
                     id: anime.id,
-                    type: 'series',
+                    type: contentType,
                     name: anime.name,
                     poster: anime.poster,
                     posterShape: 'poster',
                     description: anime.description || `Regardez ${anime.name} en streaming sur Anime-Sama`
                 }));
             }
-        } else if (id === 'animesama-latest') {
+        } else if (id === 'animesama-latest' || id === 'animesama-anime-latest') {
             // Derniers épisodes ajoutés
             const latest = await scraper.getLatestEpisodes();
             const uniqueAnimes = [...new Map(latest.map(ep => [ep.slug, ep])).values()];
@@ -79,7 +89,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
                 if (details) {
                     metas.push({
                         id: details.id,
-                        type: 'series',
+                        type: contentType,
                         name: details.name,
                         poster: details.poster,
                         posterShape: 'poster',
@@ -130,7 +140,7 @@ builder.defineMetaHandler(async ({ type, id }) => {
 
         const meta = {
             id: details.id,
-            type: 'series',
+            type: type, // Utilise le type demandé ('anime' ou 'series')
             name: details.name,
             poster: details.poster,
             posterShape: 'poster',
