@@ -22,24 +22,34 @@ async function getBrowser() {
     
     browserLaunchPromise = (async () => {
         try {
-            console.log('🚀 Lancement du navigateur...');
-            browserInstance = await puppeteer.launch({
-                headless: 'new',
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--disable-gpu',
-                    '--window-size=1920,1080',
-                    '--disable-web-security',
-                    '--disable-features=IsolateOrigins,site-per-process'
-                ],
-                defaultViewport: {
-                    width: 1920,
-                    height: 1080
-                }
-            });
+        console.log('🚀 Lancement du navigateur...');
+        
+        // Configuration pour Docker/Railway ou local
+        const launchOptions = {
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920,1080',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--single-process'
+            ],
+            defaultViewport: {
+                width: 1920,
+                height: 1080
+            }
+        };
+        
+        // Utiliser le chemin Chrome de l'environnement si disponible
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        }
+        
+        browserInstance = await puppeteer.launch(launchOptions);
             
             console.log('✅ Navigateur lancé avec succès');
             
